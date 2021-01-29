@@ -4,6 +4,7 @@ import { BarCodeScanner } from 'expo-barcode-scanner';
 import * as Permissions from 'expo-permissions';
 import * as firebase from 'firebase'
 import db from '../config';
+import Header from './components/Header'
 
 export default class TransactionScreen extends React.Component {
   constructor() {
@@ -21,7 +22,7 @@ export default class TransactionScreen extends React.Component {
   getCameraPermission = async (id) => {
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
     this.setState({
-      hasCameraPerm: status === 'granted', //the granted is true the user has aalowed or false if the user has denied
+      hasCameraPerm: status === 'granted', // the granted is true the user has aalowed or false if the user has denied
       buttonState: id,
       scanned: false
     });
@@ -42,19 +43,20 @@ export default class TransactionScreen extends React.Component {
     }
   };
   initiateBookIssue = async () => {
-    db.collection('transaction')
+    console.log(this.state.sstudentId+'_'+this.state.sbookId)
+    await db.collection('transaction')
       .add({
         'studentId': this.state.sstudentId,
-        'bookId': this.state.sbookId,
+        'bookid': this.state.sbookId,
         'date': firebase.firestore.Timestamp.now().toDate(),
         'transactionType': 'issue'
       })
-    db.collection('Books')
+    await db.collection('Books')
     .doc('bca001')
     .update({
       availablity: false
     })
-    db.collection('Students')
+    await db.collection('Students')
     .doc('stu001')
     .update({
       noofbookissued: firebase.firestore.FieldValue.increment(1)
@@ -66,19 +68,19 @@ export default class TransactionScreen extends React.Component {
     })
   }
   initiateBookReturn = async () => {
-    db.collection('transaction')
+    await db.collection('transaction')
       .add({
         'studentId': this.state.sstudentId,
-        'bookId': this.state.sbookId,
+        'bookid': this.state.sbookId,
         'date': firebase.firestore.Timestamp.now().toDate(),
         'transactionType': 'return'
       })
-    db.collection('Books')
+    await db.collection('Books')
     .doc('bca001')
     .update({
       availablity: true
     })
-    db.collection('Students')
+    await db.collection('Students')
     .doc('stu001')
     .update({
       noofbookissued: firebase.firestore.FieldValue.increment(-1)
@@ -90,10 +92,12 @@ export default class TransactionScreen extends React.Component {
     })
   }
   studentEligiliblityForIssue =  async () => {
+    console.log(this.state.sstudentId)
     const sturef = await db.collection('Students')
       .where("id",'==',this.state.sstudentId)
       .get()
     var isStudentEligible = ""
+    console.log(sturef.docs)
     if(sturef.docs.length==0){
       this.setState({
         sstudentId: '',
@@ -120,7 +124,7 @@ export default class TransactionScreen extends React.Component {
   }
   studentEligiliblityForReturn = async () =>{
     const ref = await db.collection("transaction")
-      .where("bookId",'==',this.state.sbookId).limit(1)
+      .where("bookid",'==',this.state.sbookId).limit(1)
       .get();
       var isStudentEligible = '';
       ref.docs.map((doc) =>{
@@ -140,7 +144,7 @@ export default class TransactionScreen extends React.Component {
   }
   bookEligiliblityForIssue = async () =>{
     const bookref = await db.collection("Books")
-      .where("bookId",'==',this.state.sbookId)
+      .where("bookid",'==',this.state.sbookId)
       .get();
     var traType = '';
     if (bookref.docs.length == 0) {
@@ -155,6 +159,7 @@ export default class TransactionScreen extends React.Component {
         }
       })
     }
+    console.log(traType);
     return traType
   }
   handleTransaction = async () => {
@@ -199,11 +204,14 @@ export default class TransactionScreen extends React.Component {
       return (
         <KeyboardAvoidingView behavior={Platform.OS === "android" ? "padding" : "height"} style={styles.container}>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={{ alignItems: 'center' }}>
+            <View>
+            <Header/>
+            <View>
               <View>
-                <Image style={{width:150,height:150,margin:30,marginBottom:50}} source={require('../assets/book.png')}/>
+                <Image style={{width:170,height:170,margin:30,marginBottom:50,alignSelf:'center'}} source={require('../assets/book.png')}/>
               </View>
-              <View styles={styles.inputView}>
+              <View style={{flexDirection:'row',alignSelf:'center',marginBottom:15}}>
+                <Image style={{width:30,height:30,marginRight:-35,alignSelf:'center'}} source={require('../assets/bookic.png')}/>
                 <TextInput
                   style={styles.input}
                   placeholder={'Book ID'}
@@ -217,7 +225,8 @@ export default class TransactionScreen extends React.Component {
                   <Text style={styles.scantext}>Scan</Text>
                 </TouchableOpacity>
               </View>
-              <View styles={styles.inputView}>
+              <View style={{flexDirection:'row',alignSelf:'center',marginBottom:15,marginLeft:3}}>
+                <Image style={{width:22,height:28,marginRight:-28,alignSelf:'center'}} source={require('../assets/person.png')}/>
                 <TextInput
                   style={styles.input}
                   placeholder={'Student ID'}
@@ -233,9 +242,10 @@ export default class TransactionScreen extends React.Component {
               </View>
               <TouchableOpacity
                 style={styles.submit}
-                onPress={async () =>{this.handleTransaction();this.setState({sbookId:'',sstudentId:''})}}>
+                onPress={async () =>{this.handleTransaction()}}>
                   <Text style={styles.submitText}>Submit</Text>
               </TouchableOpacity>
+            </View>
             </View>
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
@@ -246,21 +256,16 @@ export default class TransactionScreen extends React.Component {
 
 const styles = StyleSheet.create({
   container: {
-    flex:1
-  },
-  inputView: {
-    flexDirection:'row'
+    flex:1,
   },
   scanbutton: {
-    backgroundColor: '#093869',
-    padding:5,
     width:50,
-    height:50,
-    marginTop:-50,
-    marginLeft:200,
-    marginBottom:10,
+    height:35,
     alignItems:'center',
-    justifyContent:'center'
+    justifyContent:'center',
+    backgroundColor:'#fa8828',
+    borderRadius:10,
+    borderWidth:2
   },
   scantext: {
     color: 'white',
@@ -273,18 +278,28 @@ const styles = StyleSheet.create({
   },
   input: {
     width:200,
-    height:50,
-    borderWidth:2
+    height:35,
+    borderWidth:2,
+    alignSelf: 'center',
+    borderRadius:10,
+    paddingLeft:35
   },
   submit: {
     alignSelf:'center',
-    backgroundColor:'#49C593',
+    backgroundColor:'#fa8828',
     width:100,
-    height:50
+    height:35,
+    alignSelf: 'center',
+    backgroundColor:'#fa8828',
+    borderRadius:10,
+    borderWidth:2,
+    justifyContent:'center'
   },
   submitText:{
     padding:10,
     textAlign:'center',
-    fontSize:20
+    fontSize:20,
+    color:'white',
+    fontWeight:'bold'
   }
 });
