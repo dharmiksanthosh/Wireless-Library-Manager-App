@@ -1,10 +1,11 @@
 import 'react-native-gesture-handler';
 import * as React from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
-import { createAppContainer } from 'react-navigation';
+import { createAppContainer, createSwitchNavigator } from 'react-navigation';
 import { createBottomTabNavigator } from 'react-navigation-tabs';
 import Search from './screens/Search';
 import TransactionScreen from './screens/TransactionScreen';
+import LoginScreen from './screens/LoginScreen';
 
 export default class App extends React.Component {
   render(){
@@ -44,7 +45,11 @@ const TabNavigator = createBottomTabNavigator({
     })
   }
 )
-const AppContainer = createAppContainer(TabNavigator);
+const switchNavigator = createSwitchNavigator({
+  LoginScreen: {screen:LoginScreen},
+  TabNavigator: {screen: TabNavigator}
+})
+const AppContainer = createAppContainer(switchNavigator);
 
 const styles = StyleSheet.create({
   container: {
